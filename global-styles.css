@@ -1,0 +1,106 @@
+html,
+body {
+   margin: 0;
+   padding: 0;
+}
+html {
+   /* Use system font for OS X and Windows */
+   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial,
+      sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+   font-size: 12px;
+   overflow: hidden;
+
+   user-select: none;
+   cursor: default;
+}
+
+*,
+*::before,
+*::after {
+   box-sizing: border-box;
+   margin: 0;
+   padding: 0;
+}
+
+input,
+textarea,
+select,
+button {
+   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial,
+      sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+   font-size: 12px;
+}
+
+input[type='checkbox'] {
+   vertical-align: 1px;
+}
+
+html,
+body,
+#reactMain {
+   height: 100%;
+}
+
+.react-tags {
+   position: relative;
+   line-height: 1.6;
+   /* clicking anywhere will focus the input */
+   cursor: text;
+   padding: 3px 0 0 3px;
+}
+
+.recordings-navigation-header .react-tags {
+   background: white;
+   padding: 4px 4px;
+   padding-bottom: 0;
+   flex: 1;
+}
+
+.group-header .react-tags__selected-tag {
+   font-size: 11px;
+}
+
+.group-header .react-tags__selected-tag:after {
+   content: '';
+   margin: inherit;
+}
+.react-tags__selected {
+   display: inline;
+}
+
+.react-tags__selected-tag-text {
+   /* keep stuff within a certain size*/
+   display: inline-block;
+   max-width: 17em;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   vertical-align: bottom;
+   padding: 0 0 0 6px;
+   font-weight: 500;
+}
+
+@media screen and (min-width: 30em) {
+   .react-tags__search {
+      /* this will become the offsetParent for suggestions */
+      position: relative;
+   }
+}
+
+.react-tags__search input::-ms-clear {
+   display: none;
+}
+
+.react-tags__suggestions {
+   position: absolute;
+   top: 100%;
+   left: 0;
+   width: 100%;
+   z-index: 1; /* Ensure popup shows above sidebar */
+}
+
+@media screen and (min-width: 30em) {
+   .react-tags__suggestions {
+      width: 240px;
+   }
+}

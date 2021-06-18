@@ -1,9 +1,9 @@
 import * as React from "react"
 import * as ReactDOM from "react-dom"
-import ElectronApp from './ElectronApp'
+import ChannelsApp from "./ChannelsApp"
 
-function App() {
-  return <h1>Hello, react!</h1>
-}
 
-ReactDOM.render(<ElectronApp />, document.getElementById("app"))
+
+
+
+ReactDOM.render(<ChannelsApp />, document.getElementById("app"))
