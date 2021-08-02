@@ -1,8 +1,7 @@
 import * as React from 'react'
 import styled from 'styled-components';
 import ChannelSeparatorInner from './channel-separator'
-//import css from '../App.css';
-import {setPassword, findCredentials} from 'keytar';
+
 
 const Container = styled.div`
    position: absolute;
@@ -41,6 +40,8 @@ interface stateStruct {
 
 class ChannelSepartors extends React.Component<Props, stateStruct> {
     
+  
+
   constructor(props: Props) {
     super(props);
   }
@@ -50,6 +51,7 @@ class ChannelSepartors extends React.Component<Props, stateStruct> {
     const renderedChannelSeparators: JSX.Element[] = [];
     const lanes = model.lanes;
     let channelKey = 0;
+    console.log("Rendering. Model = ", model);
 
     lanes.forEach(channel => {
       if (channelKey < lanes.length - 1) {
@@ -66,10 +68,17 @@ class ChannelSepartors extends React.Component<Props, stateStruct> {
       }
    });
 
-   return <Container>{renderedChannelSeparators}</Container>;
+   return <Container>
+     
+     {renderedChannelSeparators}</Container>;
 
   }
 
+  /*componentDidMount() {
+    if (this.divElement2.current) {
+      console.log("Height of 2nd DIV is ", this.divElement2.current.clientHeight, " and the Width of 2nd DIV is ", this.divElement2.current.clientWidth);
+    }
+  }*/
 
 }
   
