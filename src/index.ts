@@ -119,6 +119,9 @@ menu.append(new MenuItem({
 }))
 
 console.log('List of menu shortcuts', getReservedAcceleratorShortcuts(menu));
+const reservedAcceleratorShortcuts = getReservedAcceleratorShortcuts(menu);
+const keyboardModifierStatusByte = reservedAcceleratorShortcuts.map((modKey) =>  ((modKey.includes('Alt+')? 1:0)  + (modKey.includes('Cmd+')? 2:0)  +(modKey.includes('Ctrl+')? 2:0)  +(modKey.includes('Shift+')? 4:0)));
+console.log('List of modfifier keys in byte form ', keyboardModifierStatusByte);
 
 
 console.log(
@@ -143,7 +146,10 @@ console.log(
   mainWindow.webContents.on('before-input-event', (event, input) => {
     const keyboardModifierStatusByte = process.platform === 'darwin' ? (input.alt? 1:0)  + (input.meta? 2:0) + (input.shift?4:0) : (input.alt? 1:0)  + (input.control? 2:0) + (input.shift?4:0)
     if (userDefinedKeySettings.filter((element)=> { return (element.modifierByte===keyboardModifierStatusByte && element.keyboardEventCode === input.code); } )[0]!==undefined) {
-      console.log('The key combination <some modifier key> and ', input.code , ' has been found');
+      const modifierKeyString = process.platform === 'darwin' ? (input.alt? 'Alt+':'')  + (input.meta? 'Cmd+':'') + (input.shift?'Shift':'') : (input.alt? 'Alt+':'')  + (input.control? 'Ctrl+':'') + (input.shift?'Shift+':'')
+      const keyCode = input.code.includes('Key')?input.code.replace('Key',''):input.code.includes('Digit')?input.code.replace('Digit',''):input.code;
+      const modifierPlusKey = modifierKeyString + keyCode;
+      console.log('The key combination', modifierPlusKey, 'is already registered');
     }
   } 
   )
