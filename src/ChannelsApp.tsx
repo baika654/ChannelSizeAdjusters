@@ -2,6 +2,7 @@ import * as React  from "react"
 import * as ReactDOM from "react-dom"
 import ChannelSepartors from "./channel-separators"
 import {calculateDraggingChannelHeights} from "./make-lanes"
+import styled from "styled-components"
 import { observable, action } from "mobx"
 
 export interface channelItems {
@@ -17,10 +18,72 @@ interface State {
     lanes:{topPixel:number; height:number;}[];
   };
   interactive: boolean;
-  
-
-  
+  eventKey:string;
+  eventCode:string;
 }
+
+const reservedKeyCombinations = ['Control+KeyG',
+'Control+KeyH',
+'Control+KeyI',
+'Control+KeyN',
+'Control+KeyP',
+'Control+KeyR',
+'Control+KeyT',
+'Control+KeyZ',
+'F4',
+'Control+Shift+KeyA',
+'Control+Shift+KeyC',
+'Control+Shift+KeyD',
+'Control+Shift+KeyE',
+'Control+Shift+f4',
+'Control+Shift+KeyH',
+'Control+Shift+KeyL',
+'Control+Shift+KeyN',
+'Control+Shift+KeyO',
+'Control+Shift+KeyP',
+'Control+Shift+KeyR',
+'Control+Shift+KeyS',
+'Control+Shift+KeyV',
+'Control+Shift+KeyZ'];
+
+const LargeLetterContainer = styled.div`
+    
+    width: 100%;
+    color: red;
+    font-size: 20vw;
+    text-align: center;
+    
+ `;
+
+ const StringContainer = styled.div`
+    
+    width: 20%;
+    color: black;
+    font-size: 1vw;
+    text-align: center;
+    border-radius: 16px;
+    border: 1px solid black;
+    
+ `;
+
+const ModalBackground = styled.div`
+   height: 100%;
+   width: 100%;
+   background-color: rgba(0,0,0,0.7);
+   position: absolute;
+   top: 0;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+`;
+
+const ModalBox = styled.div`
+  width: 500px;
+  height: 300px;
+  background-color: white;
+  border-radius: 4px;
+
+`;
 
 interface Props {
 
@@ -36,8 +99,9 @@ interface Props {
 
 
 
-class ChannelsApp extends React.Component<Props, State> {
+class ChannelsApp extends React.Component /*<Props, State>*/ {
   
+    state:State;
     windowHeight:number;
     @observable
     isMouseDown:boolean;
@@ -49,8 +113,13 @@ class ChannelsApp extends React.Component<Props, State> {
     y: number;
     pX: number;
     pY: number;
-
-    divElement = React.createRef<HTMLDivElement>();
+    keyInputBuffer:string ='';
+    modifier:boolean = false;
+    horizontalBarIndex:number=0;
+    divElement:React.RefObject<HTMLDivElement>;
+    
+    
+    
     constructor(props: Props) {
       super(props);
 
@@ -62,6 +131,8 @@ class ChannelsApp extends React.Component<Props, State> {
       this.mouseUpEvent = this.mouseUpEvent.bind(this);
       this.mouseMoveEvent = this.mouseMoveEvent.bind(this);
       this.mouseDragEvent = this.mouseDragEvent.bind(this);
+      this.handleClick = this.handleClick.bind(this)
+      this.divElement = React.createRef();
       this.windowHeight=  window.document.body.offsetHeight;
       let arrayOfChannelItems:channelItems[] = [];
       let calculatedChannelHeight:number = window.document.body.offsetHeight / numberOfChannels;
@@ -90,13 +161,19 @@ class ChannelsApp extends React.Component<Props, State> {
                   lanes:arrayOfChannelItems,
                 },
                 interactive:true,
-                
-              
+                eventKey:"", 
+                eventCode:""
               }
     }
 
 
-horizontalBarIndex:number=0;
+    componentDidMount() {
+      if (this.divElement.current) {
+        console.log("Height of DIV is ", this.divElement.current.clientHeight, " and the Width of DIV is ", this.divElement.current.clientWidth);
+      }
+      console.log('Component did mount');
+      this.divElement.current?.focus();
+    }
 
 @action
 mouseDownEvent(e: React.MouseEvent<HTMLDivElement>):void {
@@ -181,22 +258,61 @@ calculateCumulativeChannelHeights(channelHeights:number[]):channelItems[] {
   return arrayOfChannelItems;
 }
 
+
 render() {
+
+  const keyInput = 'Control'; //this.props.currentState.eventKey===' ' ? 'space' :this.props.currentState.eventKey;
+    const keyCode = 'KeyD'; //this.props.currentState.eventCode;
+    if (keyInput=== 'Control'||keyInput==='Alt'||keyInput==='Shift'||keyInput==='Command'||keyInput==='Meta')  {
+       if (this.modifier) {
+        if (!this.keyInputBuffer.includes(keyInput)) {
+          const unsortedKeyInputBuffer = this.keyInputBuffer.concat('+',keyInput);
+          this.keyInputBuffer = unsortedKeyInputBuffer.split('+').sort().join('+');
+        }
+       } else {
+          this.keyInputBuffer = keyInput;
+          this.modifier=true;
+       }
+      
+    } else {
+      if (this.modifier) {
+        console.log(this.keyInputBuffer);
+        this.keyInputBuffer = this.keyInputBuffer.concat('+',keyCode);
+        this.modifier = false;
+      } else {
+        this.keyInputBuffer = keyCode;
+      }
+    }
+
     return (
-        <div ref={this.divElement} 
+        <div 
         
-        onMouseDown={ this.mouseDownEvent } onMouseUp={ this.mouseUpEvent } onMouseMove={this.mouseMoveEvent} onDragOver={this.mouseDragEvent}>
-            
-            <ChannelSepartors  {...this.state}/>
+            onMouseDown={ this.mouseDownEvent } onMouseUp={ this.mouseUpEvent } onMouseMove={this.mouseMoveEvent} onDragOver={this.mouseDragEvent}>
+        <button type="button">OpenModal</button>    
+        
+        <ChannelSepartors  {...this.state}/>
+        <ModalBackground >
+          <ModalBox ref={this.divElement} className="ChannelApp-Top-Div" tabIndex={0} onKeyDown={this.handleClick} >
+          <LargeLetterContainer>
+                {reservedKeyCombinations.includes(this.keyInputBuffer)? 'NO!!' : 'YES'}
+            </LargeLetterContainer>
+            <StringContainer>
+                {this.keyInputBuffer}
+            </StringContainer>
+          </ModalBox>
+        </ModalBackground>
         </div>
     )
 }
 
-componentDidMount() {
-  if (this.divElement.current) {
-    console.log("Height of DIV is ", this.divElement.current.clientHeight, " and the Width of DIV is ", this.divElement.current.clientWidth);
-  }
+
+
+handleClick(event: React.KeyboardEvent<HTMLDivElement>):void {
+  console.log(`Key: ${event.key} with keycode X has been pressed`);
+  this.setState({eventKey: event.key, eventCode: event.nativeEvent.code});
+  event.preventDefault();
 }
+
 
 }
 

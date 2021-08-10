@@ -3,39 +3,33 @@ import { app, BrowserWindow, Menu, MenuItem, globalShortcut } from "electron"
 let mainWindow
 
 
-
-const userDefinedKeySettings = [
-  {modifierByte:2,keyboardEventCode:"KeyG"},
-  {modifierByte:2,keyboardEventCode:"KeyH"},
-  {modifierByte:2,keyboardEventCode:"KeyI"},
-  {modifierByte:2,keyboardEventCode:"KeyN"},
-  {modifierByte:2,keyboardEventCode:"KeyP"},
-  {modifierByte:2,keyboardEventCode:"KeyR"},
-  {modifierByte:2,keyboardEventCode:"KeyT"},
-  {modifierByte:2,keyboardEventCode:"KeyZ"},
-  {modifierByte:0,keyboardEventCode:"F4"},
-  {modifierByte:6,keyboardEventCode:"KeyA"},
-  {modifierByte:6,keyboardEventCode:"KeyC"},
-  {modifierByte:6,keyboardEventCode:"KeyD"},
-  {modifierByte:6,keyboardEventCode:"KeyE"},
-  {modifierByte:6,keyboardEventCode:"F4"},
-  {modifierByte:6,keyboardEventCode:"KeyH"},
-  {modifierByte:6,keyboardEventCode:"KeyL"},
-  {modifierByte:6,keyboardEventCode:"KeyN"},
-  {modifierByte:6,keyboardEventCode:"KeyO"},
-  {modifierByte:6,keyboardEventCode:"KeyP"},
-  {modifierByte:6,keyboardEventCode:"KeyR"},
-  {modifierByte:6,keyboardEventCode:"KeyS"},
-  {modifierByte:6,keyboardEventCode:"KeyV"},
-  {modifierByte:6,keyboardEventCode:"KeyZ"},
-  {modifierByte:2,keyboardEventCode:"space"}
+const persistentShortCutKeys = [
+  {modifierByte:2, keyboardEventCode: 'Digit1'},
+  {modifierByte:2, keyboardEventCode: 'Digit2'},
+  {modifierByte:2, keyboardEventCode: 'Digit3'},
+  {modifierByte:2, keyboardEventCode: 'Digit4'},
+  {modifierByte:2, keyboardEventCode: 'Digit5'},
+  {modifierByte:2, keyboardEventCode: 'Digit6'},
+  {modifierByte:2, keyboardEventCode: 'Digit7'},
+  {modifierByte:2, keyboardEventCode: 'Digit8'},
+  {modifierByte:2, keyboardEventCode: 'Digit9'},
+  {modifierByte:2, keyboardEventCode: 'Digit0'},
+  {modifierByte:1, keyboardEventCode: 'Digit1'},
+  {modifierByte:1, keyboardEventCode: 'Digit2'},
+  {modifierByte:1, keyboardEventCode: 'Digit3'},
+  {modifierByte:1, keyboardEventCode: 'Digit4'},
+  {modifierByte:1, keyboardEventCode: 'Digit5'},
+  {modifierByte:1, keyboardEventCode: 'Digit6'},
+  {modifierByte:1, keyboardEventCode: 'Digit7'},
+  {modifierByte:1, keyboardEventCode: 'Digit8'},
+  {modifierByte:1, keyboardEventCode: 'Digit9'},
+  {modifierByte:1, keyboardEventCode: 'Digit0'}
 ];
 
 function isDevelopment():boolean {
   return (
     process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test'
    );
-  
 }
 
 /** This function iterates its way through a menu tree checking for any accelerator short-key conflicts before returning
@@ -110,37 +104,57 @@ submenu: [{ label: '&Torvid', accelerator: process.platform === 'darwin' ? 'Cmd+
 const menu = Menu.buildFromTemplate (template);
 
 menu.append(new MenuItem({
-  label: 'Krittaphol',
+  label: 'Krittaphol-Bailey',
   submenu: [{
     label: '&Woravimol', 
-    accelerator: process.platform === 'darwin' ? 'Cmd+W' : 'Ctrl+W',
+    accelerator: process.platform === 'darwin' ? 'Cmd+Shift+W' : 'Ctrl+Shift+W',
     click: () => { console.log('Pummy rocks!') }
-  }]
+  },
+  { label: 'Karl', accelerator: process.platform === 'darwin' ? 'Cmd+Shift+K': 'Ctrl+Shift+P' , click: () => { console.log('Karl')}},
+  { label: 'Fluffy', accelerator: process.platform === 'darwin' ? 'Cmd+Space': 'Ctrl+Space' , click: () => { console.log('Paul')}}]
 }))
+
+const keyType = (element:string) => {
+  if  (element <= '9' && element >= '0') {
+    return 'Digit' + element;
+  } else {
+    return 'Key' + element;
+  }
+}
+
+/**  Set up some global shortcuts. */
+app.whenReady().then(()=> {
+
+  persistentShortCutKeys.forEach((element) => {
+    const modifierKeyString = process.platform === 'darwin' ? (element.modifierByte&1? 'Alt+':'')  + (element.modifierByte&2? 'Cmd+':'') + (element.modifierByte&4?'Shift':'') : (element.modifierByte&1? 'Alt+':'')  + (element.modifierByte&2? 'Ctrl+':'') + (element.modifierByte&4?'Shift+':'')
+    const keyCode = element.keyboardEventCode.includes('Key')?element.keyboardEventCode.replace('Key',''):element.keyboardEventCode.includes('Digit')?element.keyboardEventCode.replace('Digit',''):element.keyboardEventCode; 
+    console.log('Shortcut being registered is ', modifierKeyString+keyCode);
+    globalShortcut.register(modifierKeyString+keyCode, () => {console.log(modifierKeyString+keyCode,'is pressed')});
+  });
+});
+
+
+ 
+
+
 
 console.log('List of menu shortcuts', getReservedAcceleratorShortcuts(menu));
 const reservedAcceleratorShortcuts = getReservedAcceleratorShortcuts(menu);
-const keyboardModifierStatusByte = reservedAcceleratorShortcuts.map((modKey) =>  ((modKey.includes('Alt+')? 1:0)  + (modKey.includes('Cmd+')? 2:0)  +(modKey.includes('Ctrl+')? 2:0)  +(modKey.includes('Shift+')? 4:0)));
-console.log('List of modfifier keys in byte form ', keyboardModifierStatusByte);
-
-
-console.log(
-  globalShortcut.isRegistered('Ctrl+W')
-     ? 'The Ctrl+W button is already registered!'
-     : 'The Ctrl+W button is not registered!'
-);
+const userDefinedKeySettings = reservedAcceleratorShortcuts.map((modKey) => {
+  var keyCode = modKey.split('+')[ modKey.split('+').length-1];
+  if (keyCode.length===1) { 
+    keyCode = keyType(keyCode);
+  }
+  var info = {modifierByte: ((modKey.includes('Alt+')? 1:0)  + (modKey.includes('Cmd+')? 2:0)  +(modKey.includes('Ctrl+')? 2:0)  +(modKey.includes('Shift+')? 4:0)), keyboardEventCode: keyCode}
+  return info; 
+});
+console.log('List of modfifier keys in byte form ', userDefinedKeySettings);
 
 
 
 Menu.setApplicationMenu (menu); 
 
 
-  
-console.log(
-  globalShortcut.isRegistered('Ctrl+W')
-     ? 'The Ctrl+W button is already registered!'
-     : 'The Ctrl+W button is not registered!'
-);  
   
   mainWindow.loadFile(`index.html`)
   mainWindow.webContents.on('before-input-event', (event, input) => {
@@ -149,6 +163,7 @@ console.log(
       const modifierKeyString = process.platform === 'darwin' ? (input.alt? 'Alt+':'')  + (input.meta? 'Cmd+':'') + (input.shift?'Shift':'') : (input.alt? 'Alt+':'')  + (input.control? 'Ctrl+':'') + (input.shift?'Shift+':'')
       const keyCode = input.code.includes('Key')?input.code.replace('Key',''):input.code.includes('Digit')?input.code.replace('Digit',''):input.code;
       const modifierPlusKey = modifierKeyString + keyCode;
+      console.log('Event is ', event.type);
       console.log('The key combination', modifierPlusKey, 'is already registered');
     }
   } 
