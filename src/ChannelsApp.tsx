@@ -1,5 +1,5 @@
-import * as React  from "react"
-import * as ReactDOM from "react-dom"
+import React, {Component}  from 'react'
+import ReactDOM from "react-dom"
 import ChannelSepartors from "./channel-separators"
 import {calculateDraggingChannelHeights} from "./make-lanes"
 import styled from "styled-components"
@@ -18,8 +18,15 @@ interface State {
     lanes:{topPixel:number; height:number;}[];
   };
   interactive: boolean;
-  eventKey:string;
+  eventKeyModifier:string;
   eventCode:string;
+}
+
+type BGColorIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
+const backgroundColor = (colorIndex: BGColorIndex, alpha = 1.0): string => {
+  const value = 5 + colorIndex * 6;
+  return `rgba(${value},${value},${value},${alpha})`;
 }
 
 const reservedKeyCombinations = ['Control+KeyG',
@@ -46,23 +53,82 @@ const reservedKeyCombinations = ['Control+KeyG',
 'Control+Shift+KeyV',
 'Control+Shift+KeyZ'];
 
-const LargeLetterContainer = styled.div`
+const OrangeLetterContainer = styled.div`
     
     width: 100%;
-    color: red;
-    font-size: 20vw;
+    color: orange;
     text-align: center;
-    
+    font-weight: 400;
+    font-family: UIFontregular, sans-serif;
+    font-size: 14px;
+    padding: 20px 20px 20px 20px
  `;
+
+ const GrayFont = styled.div`
+    
+ width: 100%;
+ color: rgb(169,169,169);
+ text-align: center;
+ font-weight: 400;
+ font-family: UIFontregular, sans-serif;
+ font-size: 20px;
+ padding: 25px 50px 25px 50px; 
+`;
+
+const ShortTextFont = styled.div`
+    
+ 
+ color: rgb(150,150,150);
+ text-align: center;
+ font-weight: 200;
+ font-family: UIFontregular, sans-serif;
+ font-size: 18px;
+  
+`;
+
+const WidgetContainer = styled.div`
+    
+width: 100%;
+height: 60px;
+background-color: transparent;
+display: flex;
+align-items: center;
+justify-content: space-around;
+padding: 25px; 
+`;
+
+const ResetButton = styled.button`
+  display: inline-block;
+  background: transparent;
+  height: 25px;
+  color: royalblue;
+  font-size: 14px;
+  padding: 2px;
+  border: 2px solid royalblue;
+  border-radius: 4px;
+`;
+
+const UseKeyButton = styled.button`
+  display: inline-block;
+  background: cornflowerblue;
+  height: 25px;
+  color: gray;
+  font-size: 14px;
+  padding: 2px;
+  border: 2px none blue;
+  border-radius: 4px;
+`;
 
  const StringContainer = styled.div`
     
-    width: 20%;
-    color: black;
-    font-size: 1vw;
+    width: 200px;
+    height: 35px;
+    color: white;
+    font-size: 20px;
     text-align: center;
-    border-radius: 16px;
-    border: 1px solid black;
+    border-radius: 5px;
+    border: 1px solid gray;
+    background-color: ${backgroundColor(1)};
     
  `;
 
@@ -80,10 +146,14 @@ const ModalBackground = styled.div`
 const ModalBox = styled.div`
   width: 500px;
   height: 300px;
-  background-color: white;
-  border-radius: 4px;
-
+  background-color: ${backgroundColor(6)};
+  border: 1px solid black;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px black;
+  input:focus, textarea:focus, select:focus{ outline: none;};
 `;
+
+
 
 interface Props {
 
@@ -99,7 +169,7 @@ interface Props {
 
 
 
-class ChannelsApp extends React.Component /*<Props, State>*/ {
+class ChannelsApp extends Component<Props, State> {
   
     state:State;
     windowHeight:number;
@@ -126,7 +196,7 @@ class ChannelsApp extends React.Component /*<Props, State>*/ {
       
 
       const numberOfChannels = 8;
-
+      console.log("Constructor called");
       this.mouseDownEvent = this.mouseDownEvent.bind(this);
       this.mouseUpEvent = this.mouseUpEvent.bind(this);
       this.mouseMoveEvent = this.mouseMoveEvent.bind(this);
@@ -161,7 +231,7 @@ class ChannelsApp extends React.Component /*<Props, State>*/ {
                   lanes:arrayOfChannelItems,
                 },
                 interactive:true,
-                eventKey:"", 
+                eventKeyModifier:"", 
                 eventCode:""
               }
     }
@@ -174,6 +244,9 @@ class ChannelsApp extends React.Component /*<Props, State>*/ {
       console.log('Component did mount');
       this.divElement.current?.focus();
     }
+
+
+    
 
 @action
 mouseDownEvent(e: React.MouseEvent<HTMLDivElement>):void {
@@ -261,55 +334,45 @@ calculateCumulativeChannelHeights(channelHeights:number[]):channelItems[] {
 
 render() {
 
-  const keyInput = 'Control'; //this.props.currentState.eventKey===' ' ? 'space' :this.props.currentState.eventKey;
-    const keyCode = 'KeyD'; //this.props.currentState.eventCode;
-    if (keyInput=== 'Control'||keyInput==='Alt'||keyInput==='Shift'||keyInput==='Command'||keyInput==='Meta')  {
-       if (this.modifier) {
-        if (!this.keyInputBuffer.includes(keyInput)) {
-          const unsortedKeyInputBuffer = this.keyInputBuffer.concat('+',keyInput);
-          this.keyInputBuffer = unsortedKeyInputBuffer.split('+').sort().join('+');
-        }
-       } else {
-          this.keyInputBuffer = keyInput;
-          this.modifier=true;
-       }
+  const modifierKeyInput = this.state.eventKeyModifier; // 'Control'; //this.props.currentState.eventKey===' ' ? 'space' :this.props.currentState.eventKey;
+  const codeInput = this.state.eventCode; //'KeyD'; //this.props.currentState.eventCode;
+  const keyInputWithModifier = modifierKeyInput===''? '': modifierKeyInput+codeInput;    
+    
+  return (
+      <div 
       
-    } else {
-      if (this.modifier) {
-        console.log(this.keyInputBuffer);
-        this.keyInputBuffer = this.keyInputBuffer.concat('+',keyCode);
-        this.modifier = false;
-      } else {
-        this.keyInputBuffer = keyCode;
-      }
-    }
-
-    return (
-        <div 
-        
-            onMouseDown={ this.mouseDownEvent } onMouseUp={ this.mouseUpEvent } onMouseMove={this.mouseMoveEvent} onDragOver={this.mouseDragEvent}>
-        <button type="button">OpenModal</button>    
-        
-        <ChannelSepartors  {...this.state}/>
-        <ModalBackground >
-          <ModalBox ref={this.divElement} className="ChannelApp-Top-Div" tabIndex={0} onKeyDown={this.handleClick} >
-          <LargeLetterContainer>
-                {reservedKeyCombinations.includes(this.keyInputBuffer)? 'NO!!' : 'YES'}
-            </LargeLetterContainer>
+          onMouseDown={ this.mouseDownEvent } onMouseUp={ this.mouseUpEvent } onMouseMove={this.mouseMoveEvent} onDragOver={this.mouseDragEvent}>
+      <button type="button">OpenModal</button>    
+      
+      <ChannelSepartors  {...this.state}/>
+      <ModalBackground >
+        <ModalBox ref={this.divElement} className="ChannelApp-Top-Div" tabIndex={0} onKeyDown={this.handleClick} >
+          <GrayFont>
+            Press a key combination to trigger this annotation preset
+          </GrayFont>
+          <WidgetContainer>
+            <ShortTextFont>Shortcut key:</ShortTextFont>
             <StringContainer>
-                {this.keyInputBuffer}
+              {keyInputWithModifier}
             </StringContainer>
-          </ModalBox>
-        </ModalBackground>
-        </div>
-    )
+            <ResetButton>Reset</ResetButton>
+            <UseKeyButton>Use this key</UseKeyButton>
+          </WidgetContainer>
+          <OrangeLetterContainer>
+              {reservedKeyCombinations.includes(this.keyInputBuffer)? 'That combination is being used elsewhere in Lightning (another preset annotation or accelerator shortcut)' : ''}
+          </OrangeLetterContainer>
+        </ModalBox>
+      </ModalBackground>
+      </div>
+  )
 }
 
 
 
 handleClick(event: React.KeyboardEvent<HTMLDivElement>):void {
-  console.log(`Key: ${event.key} with keycode X has been pressed`);
-  this.setState({eventKey: event.key, eventCode: event.nativeEvent.code});
+  console.log(`Key: ${event.key} with code ${event.nativeEvent.code} has been pressed`);
+  const modifierKeyString = process.platform === 'darwin' ? (event.altKey? 'Alt+':'')  + (event.metaKey? 'Cmd+':'') + (event.shiftKey?'Shift':'') : (event.altKey? 'Alt+':'')  + (event.ctrlKey? 'Ctrl+':'') + (event.shiftKey?'Shift+':'')
+  this.setState({eventKeyModifier: modifierKeyString, eventCode: event.nativeEvent.code});
   event.preventDefault();
 }
 

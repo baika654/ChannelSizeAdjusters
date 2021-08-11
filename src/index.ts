@@ -1,7 +1,9 @@
-import { app, BrowserWindow, Menu, MenuItem, globalShortcut } from "electron"
+import { app, BrowserWindow, Menu, MenuItem, globalShortcut, shell } from "electron"
+import defaultMenu from "electron-default-menu";
 
 let mainWindow
 
+let isMenu:boolean = false;
 
 const persistentShortCutKeys = [
   {modifierByte:2, keyboardEventCode: 'Digit1'},
@@ -89,7 +91,7 @@ function createWindow() {
     },
   })
   
-const template = [ {label:'Help'}, {label:'File'}, {label:'Edit'}, {label: 'View'}, { label: 'Krittaphol',
+/*const template = [ {label:'Help'}, {label:'File'}, {label:'Edit'}, {label: 'View'}, { label: 'Krittaphol',
 submenu: [{ label: '&Wirash', accelerator: process.platform === 'darwin' ? 'Cmd+W': 'Ctrl+W' , click: () => { console.log('Wirash')}},
 { label: '&Wanpen', accelerator: process.platform === 'darwin' ? 'Cmd+W': 'Ctrl+W' , click: () => { console.log('Wanpen')}},
 { label: '&Warit', accelerator: process.platform === 'darwin' ? 'Cmd+W': 'Ctrl+W' , click: () => { console.log('Wirat')}}]},
@@ -99,10 +101,11 @@ submenu: [{ label: '&Torvid', accelerator: process.platform === 'darwin' ? 'Cmd+
 { label: '&Hannah', submenu: [{ label: 'Katie', accelerator: process.platform === 'darwin' ? 'Cmd+K': 'Ctrl+K' , click: () => { console.log('Katie')}},
 { label: '&Paul', accelerator: process.platform === 'darwin' ? 'Cmd+P': 'Ctrl+P' , click: () => { console.log('Paul')}},
 { label: '&Amy', accelerator: process.platform === 'darwin' ? 'Cmd+A': 'Ctrl+A' , click: () => { console.log('Amy')}}]}]
-}];
+}]; */
 
-const menu = Menu.buildFromTemplate (template);
-
+const template = defaultMenu(app,shell);
+const menu = Menu.buildFromTemplate(template);
+/*
 menu.append(new MenuItem({
   label: 'Krittaphol-Bailey',
   submenu: [{
@@ -113,6 +116,7 @@ menu.append(new MenuItem({
   { label: 'Karl', accelerator: process.platform === 'darwin' ? 'Cmd+Shift+K': 'Ctrl+Shift+P' , click: () => { console.log('Karl')}},
   { label: 'Fluffy', accelerator: process.platform === 'darwin' ? 'Cmd+Space': 'Ctrl+Space' , click: () => { console.log('Paul')}}]
 }))
+*/
 
 const keyType = (element:string) => {
   if  (element <= '9' && element >= '0') {
@@ -131,28 +135,28 @@ app.whenReady().then(()=> {
     console.log('Shortcut being registered is ', modifierKeyString+keyCode);
     globalShortcut.register(modifierKeyString+keyCode, () => {console.log(modifierKeyString+keyCode,'is pressed')});
   });
-});
+}); 
 
 
  
 
 
 
-console.log('List of menu shortcuts', getReservedAcceleratorShortcuts(menu));
-const reservedAcceleratorShortcuts = getReservedAcceleratorShortcuts(menu);
-const userDefinedKeySettings = reservedAcceleratorShortcuts.map((modKey) => {
-  var keyCode = modKey.split('+')[ modKey.split('+').length-1];
-  if (keyCode.length===1) { 
-    keyCode = keyType(keyCode);
-  }
-  var info = {modifierByte: ((modKey.includes('Alt+')? 1:0)  + (modKey.includes('Cmd+')? 2:0)  +(modKey.includes('Ctrl+')? 2:0)  +(modKey.includes('Shift+')? 4:0)), keyboardEventCode: keyCode}
-  return info; 
-});
+  console.log('List of menu shortcuts', getReservedAcceleratorShortcuts(menu));
+  const reservedAcceleratorShortcuts = getReservedAcceleratorShortcuts(menu);
+  const userDefinedKeySettings = reservedAcceleratorShortcuts.map((modKey) => {
+    var keyCode = modKey.split('+')[ modKey.split('+').length-1];
+    if (keyCode.length===1) { 
+      keyCode = keyType(keyCode);
+    }
+    var info = {modifierByte: ((modKey.includes('Alt+')? 1:0)  + (modKey.includes('Cmd+')? 2:0)  +(modKey.includes('Ctrl+')? 2:0)  +(modKey.includes('Shift+')? 4:0)), keyboardEventCode: keyCode}
+    return info; 
+  });
 console.log('List of modfifier keys in byte form ', userDefinedKeySettings);
 
 
+Menu.setApplicationMenu(menu);
 
-Menu.setApplicationMenu (menu); 
 
 
   
@@ -166,8 +170,9 @@ Menu.setApplicationMenu (menu);
       console.log('Event is ', event.type);
       console.log('The key combination', modifierPlusKey, 'is already registered');
     }
-  } 
+  }
   )
 }
+
 
 app.whenReady().then(createWindow)
