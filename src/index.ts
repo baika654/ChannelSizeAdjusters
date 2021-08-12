@@ -1,32 +1,9 @@
-import { app, BrowserWindow, Menu, MenuItem, globalShortcut, shell } from "electron"
+import { app, BrowserWindow, Menu, MenuItem, globalShortcut, shell, ipcMain as ipc } from "electron"
 import defaultMenu from "electron-default-menu";
 
 let mainWindow
 
-let isMenu:boolean = false;
 
-const persistentShortCutKeys = [
-  {modifierByte:2, keyboardEventCode: 'Digit1'},
-  {modifierByte:2, keyboardEventCode: 'Digit2'},
-  {modifierByte:2, keyboardEventCode: 'Digit3'},
-  {modifierByte:2, keyboardEventCode: 'Digit4'},
-  {modifierByte:2, keyboardEventCode: 'Digit5'},
-  {modifierByte:2, keyboardEventCode: 'Digit6'},
-  {modifierByte:2, keyboardEventCode: 'Digit7'},
-  {modifierByte:2, keyboardEventCode: 'Digit8'},
-  {modifierByte:2, keyboardEventCode: 'Digit9'},
-  {modifierByte:2, keyboardEventCode: 'Digit0'},
-  {modifierByte:1, keyboardEventCode: 'Digit1'},
-  {modifierByte:1, keyboardEventCode: 'Digit2'},
-  {modifierByte:1, keyboardEventCode: 'Digit3'},
-  {modifierByte:1, keyboardEventCode: 'Digit4'},
-  {modifierByte:1, keyboardEventCode: 'Digit5'},
-  {modifierByte:1, keyboardEventCode: 'Digit6'},
-  {modifierByte:1, keyboardEventCode: 'Digit7'},
-  {modifierByte:1, keyboardEventCode: 'Digit8'},
-  {modifierByte:1, keyboardEventCode: 'Digit9'},
-  {modifierByte:1, keyboardEventCode: 'Digit0'}
-];
 
 function isDevelopment():boolean {
   return (
@@ -91,32 +68,10 @@ function createWindow() {
     },
   })
   
-/*const template = [ {label:'Help'}, {label:'File'}, {label:'Edit'}, {label: 'View'}, { label: 'Krittaphol',
-submenu: [{ label: '&Wirash', accelerator: process.platform === 'darwin' ? 'Cmd+W': 'Ctrl+W' , click: () => { console.log('Wirash')}},
-{ label: '&Wanpen', accelerator: process.platform === 'darwin' ? 'Cmd+W': 'Ctrl+W' , click: () => { console.log('Wanpen')}},
-{ label: '&Warit', accelerator: process.platform === 'darwin' ? 'Cmd+W': 'Ctrl+W' , click: () => { console.log('Wirat')}}]},
-{ label: 'RoundTree',
-submenu: [{ label: '&Torvid', accelerator: process.platform === 'darwin' ? 'Cmd+T': 'Ctrl+T' , click: () => { console.log('Torvid')}},
-{ label: '&Sven', accelerator: process.platform === 'darwin' ? 'Cmd+S': 'Ctrl+S' , click: () => { console.log('Sven')}},
-{ label: '&Hannah', submenu: [{ label: 'Katie', accelerator: process.platform === 'darwin' ? 'Cmd+K': 'Ctrl+K' , click: () => { console.log('Katie')}},
-{ label: '&Paul', accelerator: process.platform === 'darwin' ? 'Cmd+P': 'Ctrl+P' , click: () => { console.log('Paul')}},
-{ label: '&Amy', accelerator: process.platform === 'darwin' ? 'Cmd+A': 'Ctrl+A' , click: () => { console.log('Amy')}}]}]
-}]; */
 
 const template = defaultMenu(app,shell);
 const menu = Menu.buildFromTemplate(template);
-/*
-menu.append(new MenuItem({
-  label: 'Krittaphol-Bailey',
-  submenu: [{
-    label: '&Woravimol', 
-    accelerator: process.platform === 'darwin' ? 'Cmd+Shift+W' : 'Ctrl+Shift+W',
-    click: () => { console.log('Pummy rocks!') }
-  },
-  { label: 'Karl', accelerator: process.platform === 'darwin' ? 'Cmd+Shift+K': 'Ctrl+Shift+P' , click: () => { console.log('Karl')}},
-  { label: 'Fluffy', accelerator: process.platform === 'darwin' ? 'Cmd+Space': 'Ctrl+Space' , click: () => { console.log('Paul')}}]
-}))
-*/
+
 
 const keyType = (element:string) => {
   if  (element <= '9' && element >= '0') {
@@ -125,17 +80,6 @@ const keyType = (element:string) => {
     return 'Key' + element;
   }
 }
-
-/**  Set up some global shortcuts. */
-app.whenReady().then(()=> {
-
-  persistentShortCutKeys.forEach((element) => {
-    const modifierKeyString = process.platform === 'darwin' ? (element.modifierByte&1? 'Alt+':'')  + (element.modifierByte&2? 'Cmd+':'') + (element.modifierByte&4?'Shift':'') : (element.modifierByte&1? 'Alt+':'')  + (element.modifierByte&2? 'Ctrl+':'') + (element.modifierByte&4?'Shift+':'')
-    const keyCode = element.keyboardEventCode.includes('Key')?element.keyboardEventCode.replace('Key',''):element.keyboardEventCode.includes('Digit')?element.keyboardEventCode.replace('Digit',''):element.keyboardEventCode; 
-    console.log('Shortcut being registered is ', modifierKeyString+keyCode);
-    globalShortcut.register(modifierKeyString+keyCode, () => {console.log(modifierKeyString+keyCode,'is pressed')});
-  });
-}); 
 
 
  
@@ -175,4 +119,12 @@ Menu.setApplicationMenu(menu);
 }
 
 
-app.whenReady().then(createWindow)
+app.whenReady().then(createWindow);
+
+ipc.on('RegisterGlobalShortcut', (event,args) => {
+  console.log('A request for registration has been received. The keyboard shortcut', args,'is to be registered');
+  let win = BrowserWindow.getFocusedWindow();
+  if (win) {
+  globalShortcut.register(args.split(',')[0]+args.split(',')[1], () => {win?.webContents.send('ShortcutEvent',args)});
+  }
+});

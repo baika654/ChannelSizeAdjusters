@@ -8,6 +8,7 @@ function createWindow() {
         height: 600,
         webPreferences: {
             nodeIntegration: true,
+            devTools: true
         },
     });
     mainWindow.loadFile(`index.html`);

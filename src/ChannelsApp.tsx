@@ -4,6 +4,7 @@ import ChannelSepartors from "./channel-separators"
 import {calculateDraggingChannelHeights} from "./make-lanes"
 import styled from "styled-components"
 import { observable, action } from "mobx"
+import { globalShortcut, app, ipcRenderer as ipc, IpcRendererEvent, IpcMainEvent } from 'electron'
 
 export interface channelItems {
   
@@ -28,6 +29,15 @@ const backgroundColor = (colorIndex: BGColorIndex, alpha = 1.0): string => {
   const value = 5 + colorIndex * 6;
   return `rgba(${value},${value},${value},${alpha})`;
 }
+
+const keyType = (element:string) => {
+  if  (element <= '9' && element >= '0') {
+    return 'Digit' + element;
+  } else {
+    return 'Key' + element;
+  }
+}
+
 
 const reservedKeyCombinations = ['Control+KeyG',
 'Control+KeyH',
@@ -153,7 +163,28 @@ const ModalBox = styled.div`
   input:focus, textarea:focus, select:focus{ outline: none;};
 `;
 
-
+const persistentShortCutKeys = [
+  {modifierByte:2, keyboardEventCode: 'Digit1'},
+  {modifierByte:2, keyboardEventCode: 'Digit2'},
+  {modifierByte:2, keyboardEventCode: 'Digit3'},
+  {modifierByte:2, keyboardEventCode: 'Digit4'},
+  {modifierByte:2, keyboardEventCode: 'Digit5'},
+  {modifierByte:2, keyboardEventCode: 'Digit6'},
+  {modifierByte:2, keyboardEventCode: 'Digit7'},
+  {modifierByte:2, keyboardEventCode: 'Digit8'},
+  {modifierByte:2, keyboardEventCode: 'Digit9'},
+  {modifierByte:2, keyboardEventCode: 'Digit0'},
+  {modifierByte:1, keyboardEventCode: 'Digit1'},
+  {modifierByte:1, keyboardEventCode: 'Digit2'},
+  {modifierByte:1, keyboardEventCode: 'Digit3'},
+  {modifierByte:1, keyboardEventCode: 'Digit4'},
+  {modifierByte:1, keyboardEventCode: 'Digit5'},
+  {modifierByte:1, keyboardEventCode: 'Digit6'},
+  {modifierByte:1, keyboardEventCode: 'Digit7'},
+  {modifierByte:1, keyboardEventCode: 'Digit8'},
+  {modifierByte:1, keyboardEventCode: 'Digit9'},
+  {modifierByte:1, keyboardEventCode: 'Digit0'} 
+]; 
 
 interface Props {
 
@@ -192,8 +223,6 @@ class ChannelsApp extends Component<Props, State> {
     
     constructor(props: Props) {
       super(props);
-
-      
 
       const numberOfChannels = 8;
       console.log("Constructor called");
@@ -234,10 +263,34 @@ class ChannelsApp extends Component<Props, State> {
                 eventKeyModifier:"", 
                 eventCode:""
               }
+      
+      /* Register all global shortcuts */        
+      persistentShortCutKeys.forEach((element) => {
+        const modifierKeyString = process.platform === 'darwin' ? (element.modifierByte&1? 'Alt+':'')  + (element.modifierByte&2? 'Cmd+':'') + (element.modifierByte&4?'Shift':'') : (element.modifierByte&1? 'Alt+':'')  + (element.modifierByte&2? 'Ctrl+':'') + (element.modifierByte&4?'Shift+':'')
+        const keyCode = element.keyboardEventCode.includes('Key')?element.keyboardEventCode.replace('Key',''):element.keyboardEventCode.includes('Digit')?element.keyboardEventCode.replace('Digit',''):element.keyboardEventCode; 
+        console.log('Shortcut being registered is ', modifierKeyString+keyCode);
+        ipc.send('RegisterGlobalShortcut',modifierKeyString+','+keyCode);
+      });
+
+      /* Set up a IPC listener to check for activated global shortcuts. Feed into state if appropriate */
+      const globalShortcutEvents = ipc.on('ShortcutEvent', (event,args) => {
+        const keyboardInput = args.split(',');
+        if (keyboardInput.length===2) {
+          if (keyboardInput[1].length===1) {
+            this.setState({eventKeyModifier: keyboardInput[0], eventCode: keyType(keyboardInput[1])});
+          } else {
+            this.setState({eventKeyModifier: keyboardInput[0], eventCode: keyboardInput[1]});
+          }
+        }
+        console.log('The following shortcut',args,'has been fired');
+      });
+
     }
 
 
     componentDidMount() {
+    
+
       if (this.divElement.current) {
         console.log("Height of DIV is ", this.divElement.current.clientHeight, " and the Width of DIV is ", this.divElement.current.clientWidth);
       }
@@ -371,12 +424,21 @@ render() {
 
 handleClick(event: React.KeyboardEvent<HTMLDivElement>):void {
   console.log(`Key: ${event.key} with code ${event.nativeEvent.code} has been pressed`);
-  const modifierKeyString = process.platform === 'darwin' ? (event.altKey? 'Alt+':'')  + (event.metaKey? 'Cmd+':'') + (event.shiftKey?'Shift':'') : (event.altKey? 'Alt+':'')  + (event.ctrlKey? 'Ctrl+':'') + (event.shiftKey?'Shift+':'')
-  this.setState({eventKeyModifier: modifierKeyString, eventCode: event.nativeEvent.code});
+  const modifierKeyString = process.platform === 'darwin' ? (event.altKey? 'Alt+':'')  + (event.metaKey? 'Cmd+':'') + (event.shiftKey?'Shift':'') : (event.altKey? 'Alt+':'')  + (event.ctrlKey? 'Control+':'') + (event.shiftKey?'Shift+':'')
+  let eventCode:string;
+  if (event.nativeEvent.code.includes('Alt')||event.nativeEvent.code.includes('Control')||event.nativeEvent.code.includes('Shift')||event.nativeEvent.code.includes('Meta')) {
+    eventCode = '';
+  } else {
+    eventCode = event.nativeEvent.code;
+  }
+  this.setState({eventKeyModifier: modifierKeyString, eventCode: eventCode});
   event.preventDefault();
 }
 
 
 }
 
+/*ipc.on('ShortcutEvent', (event,args) => {
+  console.log('The following shortcut',args,'has been fired');
+})*/
 export default ChannelsApp;
