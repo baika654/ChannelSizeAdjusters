@@ -128,3 +128,12 @@ ipc.on('RegisterGlobalShortcut', (event,args) => {
   globalShortcut.register(args.split(',')[0]+args.split(',')[1], () => {win?.webContents.send('ShortcutEvent',args)});
   }
 });
+
+ipc.on('GetAllAcceleratorShortcuts', (event,args) => {
+  let menu = Menu.getApplicationMenu();
+  if (menu) {
+    event.returnValue = getReservedAcceleratorShortcuts(menu).join(',');
+  } else {
+    event.returnValue ='NoMenu';
+  }
+})
